@@ -337,6 +337,9 @@
     <script>
         // Wrap all JavaScript code inside window.onload to ensure ethers.js is fully loaded.
         window.onload = () => {
+            // Correctly reference the ethers object from the window global for Ethers v6 UMD bundle
+            const ethers = window.ethers;
+
             // Constants from original index.js
             const RPC_URL = "https://evmrpc-testnet.0g.ai/";
             const ROUTER_ADDRESS = "0xb95B5953FF8ee5D5d9818CdbEfE363ff2191318c";
@@ -1117,8 +1120,8 @@
                         }
                         await addTransactionToQueue(async () => {
                             await approveToken(USDT_ADDRESS, usdtAmount);
-                            await swapAuto("usdtToBtc", usdtAmount);
-                        }, `USDT to BTC, ${randomUsdt} USDT (Swap ${i}/${totalSwaps})`);
+                            await swapAuto("usdtToEth", usdtAmount);
+                        }, `USDT to ETH, ${randomUsdt} USDT (Swap ${i}/${totalSwaps})`);
                     }
                     if (i < totalSwaps) {
                         await interruptibleDelay(5000, `Waiting 5 seconds before next BTC & USDT swap...`);
@@ -1202,7 +1205,7 @@
                         await interruptibleDelay(5000, `Waiting 5 seconds before next ETH & BTC swap...`);
                     }
                 }
-                log("All ETH & BTC swaps queued.", "success");
+                log("All BTC & ETH swaps queued.", "success");
             }
 
             async function autoSwapEthGimo(totalSwaps) {
