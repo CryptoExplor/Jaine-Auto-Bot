@@ -338,7 +338,8 @@
         // Wrap all JavaScript code inside window.onload to ensure ethers.js is fully loaded.
         window.onload = () => {
             // Correctly reference the ethers object from the window global for Ethers v6 UMD bundle
-            const ethers = window.ethers;
+            const { ethers } = window;
+            console.log("Ethers object available:", typeof ethers !== 'undefined'); // Diagnostic log
 
             // Constants from original index.js
             const RPC_URL = "https://evmrpc-testnet.0g.ai/";
