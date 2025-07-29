@@ -341,6 +341,19 @@
             const { ethers } = window;
             console.log("Ethers object available:", typeof ethers !== 'undefined'); // Diagnostic log
 
+            // Add a diagnostic check after a short delay, in case it's a very subtle timing issue
+            setTimeout(() => {
+                if (typeof window.ethers === 'undefined') {
+                    log("Warning: window.ethers is still undefined after a short delay. Ethers.js CDN might not have loaded correctly.", "error");
+                    log("Please check your browser's Network tab for the ethers.js script.", "error");
+                } else {
+                    log("Ethers.js (window.ethers) appears to be loaded.", "system");
+                    if (typeof window.ethers.JsonRpcProvider === 'undefined') {
+                        log("Warning: window.ethers is loaded, but JsonRpcProvider is undefined. This is unexpected for Ethers v6 UMD.", "error");
+                    }
+                }
+            }, 1000); // Check after 1 second
+
             // Constants from original index.js
             const RPC_URL = "https://evmrpc-testnet.0g.ai/";
             const ROUTER_ADDRESS = "0xb95B5953FF8ee5D5d9818CdbEfE363ff2191318c";
@@ -1406,6 +1419,13 @@
                 }
 
                 try {
+                    // Re-check ethers availability right before usage
+                    if (typeof ethers === 'undefined' || typeof ethers.JsonRpcProvider === 'undefined') {
+                        log("Error: Ethers.js or ethers.JsonRpcProvider is not available when attempting to load wallet. Cannot proceed.", "error");
+                        await showMessageBox("Initialization Error", "Ethers.js library or its JsonRpcProvider is not fully loaded. Please ensure the CDN script loaded successfully.");
+                        return;
+                    }
+
                     provider = new ethers.JsonRpcProvider(RPC_URL);
                     wallet = new ethers.Wallet(privateKey, provider);
                     walletInfoDiv.classList.remove('hidden');
@@ -1444,6 +1464,13 @@
                     log(`\n🔁 Starting process for wallet ${i + 1}/${keys.length} (${key.substring(0, 8)}...)`, "system");
 
                     try {
+                        // Re-check ethers availability right before usage in multi-wallet
+                        if (typeof ethers === 'undefined' || typeof ethers.JsonRpcProvider === 'undefined') {
+                            log("Error: Ethers.js or ethers.JsonRpcProvider is not available when attempting multi-wallet swaps. Cannot proceed.", "error");
+                            await showMessageBox("Initialization Error", "Ethers.js library or its JsonRpcProvider is not fully loaded. Please ensure the CDN script loaded successfully.");
+                            return; // Exit multi-wallet loop if ethers is not ready
+                        }
+
                         provider = new ethers.JsonRpcProvider(RPC_URL);
                         wallet = new ethers.Wallet(key, provider);
                         await updateWalletData(); // Update UI for current wallet
@@ -1499,7 +1526,7 @@
                         return;
                     }
 
-                    await startTransactionProcess(pair, totalSwaps);
+                    startTransactionProcess(pair, totalSwaps); // Removed await here to allow immediate queue processing
                 });
             });
 
