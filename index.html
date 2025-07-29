@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jaine Auto Bot</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Ethers.js CDN (v6) -->
+    <script src="https://cdn.ethers.io/lib/ethers-6.7.0.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #2d3748; /* Slightly lighter dark background for container */
+            border-radius: 1rem; /* Rounded corners */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea; /* Purple accent */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .header p {
+            font-size: 1.1rem;
+            color: #a0aec0;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #e2e8f0;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #4a5568;
+            padding-bottom: 0.5rem;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #cbd5e0;
+        }
+        .input-group input[type="text"],
+        .input-group input[type="number"],
+        .input-group textarea { /* Added textarea styling */
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #4a5568;
+            background-color: #2d3748;
+            color: #e2e8f0;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .input-group input[type="text"]:focus,
+        .input-group input[type="number"]:focus,
+        .input-group textarea:focus { /* Added textarea focus styling */
+            outline: none;
+            border-color: #667eea;
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+        .btn {
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            text-align: center;
+            color: #ffffff;
+            background-color: #4c51bf; /* Primary button color */
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn:hover {
+            background-color: #5a67d8;
+            transform: translateY(-2px);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .btn-green {
+            background-color: #38a169;
+        }
+        .btn-green:hover {
+            background-color: #48bb78;
+        }
+        .btn-red {
+            background-color: #e53e3e;
+        }
+        .btn-red:hover {
+            background-color: #f56565;
+        }
+        .log-output {
+            background-color: #1a202c;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            min-height: 150px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #4a5568;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap; /* Preserve whitespace and wrap text */
+            word-break: break-all; /* Break long words */
+        }
+        .log-output div {
+            margin-bottom: 0.25rem;
+        }
+        .log-info { color: #e2e8f0; }
+        .log-success { color: #48bb78; }
+        .log-error { color: #f56565; }
+        .log-warning { color: #ecc94b; }
+        .log-system { color: #63b3ed; }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #2d3748;
+            margin: auto;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #e2e8f0;
+            text-decoration: none;
+        }
+        .modal-options label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .modal-options label:hover {
+            background-color: #4a5568;
+        }
+        .modal-options input[type="radio"] {
+            margin-right: 0.75rem;
+            transform: scale(1.2);
+        }
+        .modal-footer {
+            margin-top: 1.5rem;
+            text-align: right;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+                margin-top: 1rem;
+            }
+            .header h1 {
+                font-size: 2rem;
+            }
+            .section-title {
+                font-size: 1.3rem;
+            }
+            .button-grid {
+                grid-template-columns: 1fr; /* Stack buttons on small screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Jaine Auto Bot 🚀</h1>
+            <p class="text-gray-400">Automated token swapping on 0G Labs Galileo Testnet</p>
+        </div>
+
+        <div class="input-group">
+            <label for="privateKeyInput">Private Key <span class="text-red-500 text-sm">(Warning: Storing private keys in browser is insecure for real funds!)</span></label>
+            <input type="text" id="privateKeyInput" placeholder="Enter your private key (e.g., 0x...)" class="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500">
+            <button id="loadWalletBtn" class="btn btn-green mt-4 w-full">Load Wallet</button>
+        </div>
+
+        <!-- Multi-Wallet Input Section -->
+        <div class="input-group mt-6">
+            <label for="multiWalletInput" class="block font-bold">Paste Private Keys for Multi-Wallet Swaps (1 per line)</label>
+            <textarea id="multiWalletInput" rows="5" placeholder="0xabc...\n0xdef..." class="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white mt-2"></textarea>
+            <button id="startMultiWalletBtn" class="btn mt-4 w-full">Run Multi-Wallet Swaps</button>
+        </div>
+
+        <div id="walletInfo" class="hidden">
+            <h2 class="section-title">Wallet Balances</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                <div class="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
+                    <span class="font-bold">Wallet Address:</span>
+                    <span id="walletAddress" class="text-blue-300 break-all"></span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
+                    <span class="font-bold">Network:</span>
+                    <span id="networkName" class="text-blue-300">OG LABS GALILEO TESTNET</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
+                    <span class="font-bold">OG Balance:</span>
+                    <span id="saldoAOGI" class="text-green-400">0.0000</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
+                    <span class="font-bold">ETH Balance:</span>
+                    <span id="saldoETH" class="text-green-400">0.0000</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
+                    <span class="font-bold">USDT Balance:</span>
+                    <span id="saldoUSDT" class="text-green-400">0.0000</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
+                    <span class="font-bold">BTC Balance:</span>
+                    <span id="saldoBTC" class="text-green-400">0.0000</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
+                    <span class="font-bold">GIMO Balance:</span>
+                    <span id="saldoGIMO" class="text-green-400">0.0000</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
+                    <span class="font-bold">STOG Balance:</span>
+                    <span id="saldoSTOG" class="text-green-400">0.0000</span>
+                </div>
+            </div>
+            <button id="updateBalanceBtn" class="btn w-full mt-2">Update Balances</button>
+        </div>
+
+        <h2 class="section-title">Testnet Faucet</h2>
+        <div class="text-gray-400 text-sm mb-4">
+            <p>The official 0G Labs Galileo Testnet faucet primarily dispenses OG tokens and requires manual interaction (X account, captcha). Direct automated claiming for OG, USDT, ETH, or BTC is not supported.</p>
+            <p class="mt-2">Please visit the faucet page to claim your testnet OG tokens:</p>
+        </div>
+        <button id="openFaucetBtn" class="btn w-full mb-6">Open 0G Faucet</button>
+
+
+        <h2 class="section-title">Swap Operations</h2>
+        <div class="input-group">
+            <label for="numSwapsInput">Number of Swaps:</label>
+            <input type="number" id="numSwapsInput" value="1" min="1" class="w-full p-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500">
+        </div>
+
+        <div class="button-grid">
+            <button class="btn" data-pair="USDT & ETH">USDT & ETH</button>
+            <button class="btn" data-pair="USDT & BTC">USDT & BTC</button>
+            <button class="btn" data-pair="BTC & ETH">BTC & ETH</button>
+            <button class="btn" data-pair="USDT & GIMO">USDT & GIMO</button>
+            <button class="btn" data-pair="USDT & STOG">USDT & STOG</button>
+            <button class="btn" data-pair="BTC & USDT">BTC & USDT</button>
+            <button class="btn" data-pair="ETH & USDT">ETH & USDT</button>
+            <button class="btn" data-pair="ETH & BTC">ETH & BTC</button>
+            <button class="btn" data-pair="ETH & GIMO">ETH & GIMO</button>
+            <button class="btn" data-pair="BTC & GIMO">BTC & GIMO</button>
+            <button class="btn" data-pair="ETH & STOG">ETH & STOG</button>
+            <button class="btn" data-pair="BTC & STOG">BTC & STOG</button>
+            <button class="btn btn-green" data-pair="Auto All">Auto All (All Pairs)</button>
+            <button id="exitBtn" class="btn btn-red">Exit</button>
+        </div>
+
+        <h2 class="section-title">Transaction Log</h2>
+        <div id="logOutput" class="log-output"></div>
+    </div>
+
+    <!-- Gas Fee Selection Modal -->
+    <div id="gasFeeModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeGasModal">&times;</span>
+            <h3 class="text-xl font-bold mb-4 text-center">Select Gas Fee</h3>
+            <div id="gasFeeOptions" class="modal-options">
+                <!-- Options will be dynamically loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button id="confirmGasBtn" class="btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box Modal -->
+    <div id="messageBoxModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeMessageBox">&times;</span>
+            <h3 id="messageBoxTitle" class="text-xl font-bold mb-4 text-center"></h3>
+            <p id="messageBoxContent" class="mb-6 text-center"></p>
+            <div class="modal-footer">
+                <button id="messageBoxConfirmBtn" class="btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wrap all JavaScript code inside window.onload to ensure ethers.js is fully loaded.
+        window.onload = () => {
+            // Constants from original index.js
+            const RPC_URL = "https://evmrpc-testnet.0g.ai/";
+            const ROUTER_ADDRESS = "0xb95B5953FF8ee5D5d9818CdbEfE363ff2191318c";
+            const USDT_ADDRESS = "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf";
+            const ETH_ADDRESS = "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c";
+            const BTC_ADDRESS = "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d";
+            const GIMO_ADDRESS = "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638";
+            const STOG_ADDRESS = "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A";
+            const NETWORK_NAME = "OG LABS GALILEO TESTNET";
+            const EXPLORER_URL = "https://chainscan-galileo.0g.ai/tx/";
+            const APPROVAL_GAS_LIMIT = 100000;
+            const SWAP_GAS_LIMIT = 150000;
+            const FAUCET_URL = "https://faucet.0g.ai/"; // Official 0G Faucet URL
+
+            // Ethers.js setup
+            let provider;
+            let wallet;
+            let selectedGasPrice = null;
+            let nextNonce = null; // For transaction queue nonce management
+
+            // UI Elements
+            const privateKeyInput = document.getElementById('privateKeyInput');
+            const loadWalletBtn = document.getElementById('loadWalletBtn');
+            const multiWalletInput = document.getElementById('multiWalletInput'); // New multi-wallet input
+            const startMultiWalletBtn = document.getElementById('startMultiWalletBtn'); // New multi-wallet button
+            const walletInfoDiv = document.getElementById('walletInfo');
+            const walletAddressSpan = document.getElementById('walletAddress');
+            const saldoAOGISpan = document.getElementById('saldoAOGI');
+            const saldoETHSpan = document.getElementById('saldoETH');
+            const saldoUSDTSpan = document.getElementById('saldoUSDT');
+            const saldoBTCSpan = document.getElementById('saldoBTC');
+            const saldoGIMOSpan = document.getElementById('saldoGIMO');
+            const saldoSTOGSpan = document.getElementById('saldoSTOG');
+            const updateBalanceBtn = document.getElementById('updateBalanceBtn');
+            const openFaucetBtn = document.getElementById('openFaucetBtn'); // New Faucet button
+            const numSwapsInput = document.getElementById('numSwapsInput');
+            const swapButtons = document.querySelectorAll('.button-grid .btn:not(#exitBtn)');
+            const exitBtn = document.getElementById('exitBtn');
+            const logOutputDiv = document.getElementById('logOutput');
+
+            // Modals
+            const gasFeeModal = document.getElementById('gasFeeModal');
+            const closeGasModalBtn = document.getElementById('closeGasModal');
+            const gasFeeOptionsDiv = document.getElementById('gasFeeOptions');
+            const confirmGasBtn = document.getElementById('confirmGasBtn');
+
+            const messageBoxModal = document.getElementById('messageBoxModal');
+            const closeMessageBoxBtn = document.getElementById('closeMessageBox');
+            const messageBoxTitle = document.getElementById('messageBoxTitle');
+            const messageBoxContent = document.getElementById('messageBoxContent');
+            const messageBoxConfirmBtn = document.getElementById('messageBoxConfirmBtn');
+
+            // ABIs (simplified for browser use, assuming common ERC20 functions)
+            const CONTRACT_ABI = [
+                {
+                    inputs: [
+                        {
+                            components: [
+                                { internalType: "address", name: "tokenIn", type: "address" },
+                                { internalType: "address", name: "tokenOut", type: "address" },
+                                { internalType: "uint24", name: "fee", type: "uint24" },
+                                { internalType: "address", name: "recipient", type: "address" },
+                                { internalType: "uint256", name: "deadline", type: "uint256" },
+                                { internalType: "uint256", name: "amountIn", type: "uint256" },
+                                { internalType: "uint256", name: "amountOutMinimum", type: "uint256" },
+                                { internalType: "uint160", name: "sqrtPriceLimitX96", type: "uint160" },
+                            ],
+                            internalType: "struct ISwapRouter.ExactInputSingleParams",
+                            name: "params",
+                            type: "tuple",
+                        },
+                    ],
+                    name: "exactInputSingle",
+                    outputs: [{ internalType: "uint256", name: "amountOut", type: "uint256" }],
+                    stateMutability: "payable",
+                    type: "function",
+                },
+            ];
+
+            const ERC20_ABI = [
+                {
+                    constant: false,
+                    inputs: [
+                        { name: "_spender", type: "address" },
+                        { name: "_value", type: "uint256" },
+                    ],
+                    name: "approve",
+                    outputs: [{ name: "", type: "bool" }],
+                    stateMutability: "nonpayable",
+                    type: "function",
+                },
+                {
+                    constant: true,
+                    inputs: [{ name: "_owner", type: "address" }],
+                    name: "balanceOf",
+                    outputs: [{ name: "balance", type: "uint256" }],
+                    stateMutability: "view",
+                    type: "function",
+                },
+                {
+                    constant: true,
+                    inputs: [
+                        { name: "_owner", type: "address" },
+                        { name: "_spender", type: "address" },
+                    ],
+                    name: "allowance",
+                    outputs: [{ name: "", type: "uint256" }],
+                    stateMutability: "view",
+                    type: "function",
+                },
+            ];
+
+            // Transaction Queue
+            let transactionQueue = [];
+            let transactionIdCounter = 0;
+            let isProcessingQueue = false;
+
+            // Faucet Claim Tracking (in-memory)
+            let lastFaucetClaims = {}; // Stores { walletAddress: timestamp_of_last_claim }
+
+            /**
+             * Custom log function to display messages in the web UI.
+             * @param {string} message - The message to log.
+             * @param {string} type - The type of message ('info', 'success', 'error', 'warning', 'system').
+             */
+            function log(message, type = "info") {
+                const logEntry = document.createElement('div');
+                logEntry.textContent = message;
+                logEntry.classList.add(`log-${type}`);
+                logOutputDiv.appendChild(logEntry);
+                logOutputDiv.scrollTop = logOutputDiv.scrollHeight; // Auto-scroll to bottom
+                console.log(`[${type.toUpperCase()}] ${message}`); // Also log to console for debugging
+            }
+
+            /**
+             * Displays a custom message box modal.
+             * @param {string} title - The title of the message box.
+             * @param {string} content - The content of the message.
+             * @returns {Promise<void>} A promise that resolves when the user clicks OK.
+             */
+            function showMessageBox(title, content) {
+                return new Promise(resolve => {
+                    messageBoxTitle.textContent = title;
+                    messageBoxContent.textContent = content;
+                    messageBoxModal.style.display = 'flex'; // Show modal
+
+                    const closeHandler = () => {
+                        messageBoxModal.style.display = 'none';
+                        messageBoxConfirmBtn.removeEventListener('click', closeHandler);
+                        closeMessageBoxBtn.removeEventListener('click', closeHandler);
+                        resolve();
+                    };
+
+                    messageBoxConfirmBtn.addEventListener('click', closeHandler);
+                    closeMessageBoxBtn.addEventListener('click', closeHandler);
+                });
+            }
+
+            /**
+             * Delays execution for a specified number of milliseconds.
+             * @param {number} ms - The delay in milliseconds.
+             * @returns {Promise<void>}
+             */
+            async function delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            /**
+             * Simulates an interruptible delay with a spinner, updating the UI.
+             * @param {number} totalMs - The total delay in milliseconds.
+             * @param {string} messagePrefix - Prefix for the waiting message.
+             */
+            async function interruptibleDelay(totalMs, messagePrefix = "Waiting") {
+                const spinner = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+                let i = 0;
+                const interval = 200;
+                let elapsed = 0;
+                const initialLogMessage = `${messagePrefix} ${totalMs / 1000} seconds...`;
+                let logEntry = document.createElement('div');
+                logEntry.classList.add('log-warning');
+                logEntry.textContent = `${spinner[i % spinner.length]} ${initialLogMessage}`;
+                logOutputDiv.appendChild(logEntry);
+                logOutputDiv.scrollTop = logOutputDiv.scrollHeight;
+
+                while (elapsed < totalMs) {
+                    logEntry.textContent = `${spinner[i % spinner.length]} ${initialLogMessage}`;
+                    await delay(interval);
+                    elapsed += interval;
+                    i++;
+                }
+                logEntry.textContent = `Delay complete.`; // Clear spinner
+                logEntry.classList.remove('log-warning');
+                logEntry.classList.add('log-system');
+            }
+
+            /**
+             * Checks if a wallet can claim from the faucet (24-hour cooldown).
+             * @param {string} address - The wallet address.
+             * @returns {boolean} True if the wallet can claim, false otherwise.
+             */
+            function canClaimFaucet(address) {
+                const last = lastFaucetClaims[address];
+                const twentyFourHours = 86400000; // milliseconds in 24 hours
+                return !last || (Date.now() - last) > twentyFourHours;
+            }
+
+            /**
+             * Marks a faucet claim as done for a specific wallet.
+             * @param {string} address - The wallet address.
+             */
+            function markFaucetClaimed(address) {
+                lastFaucetClaims[address] = Date.now();
+            }
+
+            /**
+             * Sends a raw transaction to claim tokens from a faucet contract.
+             * Assumes the tokenAddress is a contract that implements a 'claim()' function.
+             * @param {string} tokenAddress - The address of the token faucet contract.
+             */
+            async function claimFaucet(tokenAddress) {
+                try {
+                    log(`🚰 Attempting faucet claim for ${tokenAddress}...`, "system");
+                    const feeData = await provider.getFeeData();
+                    const gasPriceToUse = selectedGasPrice || feeData.gasPrice; // Use selected gas price if available
+
+                    const tx = await wallet.sendTransaction({
+                        to: tokenAddress,
+                        data: "0x1249c58b", // Function selector for claim()
+                        gasLimit: 150000, // Fixed gas limit for faucet claims
+                        gasPrice: gasPriceToUse,
+                        nonce: nextNonce,
+                    });
+                    log(`🚰 Faucet claim transaction sent for ${tokenAddress}: ${EXPLORER_URL}${tx.hash}`, "warning");
+                    await showMessageBox("Faucet Claim Pending", `Waiting for faucet claim transaction to confirm: ${EXPLORER_URL}${tx.hash}`);
+                    await tx.wait();
+                    log(`✅ Faucet claim successful for ${tokenAddress}`, "success");
+                    nextNonce++; // Manually increment nonce for the next transaction
+                } catch (err) {
+                    if (err.message && err.message.toLowerCase().includes("nonce")) {
+                        nextNonce = await provider.getTransactionCount(wallet.address, "pending");
+                        log(`Nonce refreshed after faucet claim attempt: ${nextNonce}`, "system");
+                    }
+                    log(`❌ Faucet claim failed for ${tokenAddress}: ${err.message}`, "error");
+                    // Do not re-throw error to allow multi-wallet process to continue
+                }
+            }
+
+            /**
+             * Updates the wallet balance display in the UI.
+             */
+            async function updateWalletData() {
+                if (!wallet) {
+                    log("Wallet not loaded. Please enter your private key and load the wallet.", "error");
+                    return;
+                }
+                try {
+                    const walletAddress = wallet.address;
+                    const balanceNative = await provider.getBalance(walletAddress);
+                    const saldoAOGI = parseFloat(ethers.formatEther(balanceNative)).toFixed(4);
+
+                    const usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, provider);
+                    const balanceUSDT = await usdtContract.balanceOf(walletAddress);
+                    const saldoUSDT = parseFloat(ethers.formatEther(balanceUSDT)).toFixed(4);
+
+                    const ethContract = new ethers.Contract(ETH_ADDRESS, ERC20_ABI, provider);
+                    const balanceETH = await ethContract.balanceOf(walletAddress);
+                    const saldoETH = parseFloat(ethers.formatEther(balanceETH)).toFixed(4);
+
+                    const btcContract = new ethers.Contract(BTC_ADDRESS, ERC20_ABI, provider);
+                    const balanceBTC = await btcContract.balanceOf(walletAddress);
+                    const saldoBTC = parseFloat(ethers.formatUnits(balanceBTC, 18)).toFixed(4);
+
+                    const gimoContract = new ethers.Contract(GIMO_ADDRESS, ERC20_ABI, provider);
+                    const balanceGIMO = await gimoContract.balanceOf(walletAddress);
+                    const saldoGIMO = parseFloat(ethers.formatUnits(balanceGIMO, 18)).toFixed(4);
+
+                    const stogContract = new ethers.Contract(STOG_ADDRESS, ERC20_ABI, provider);
+                    const balanceSTOG = await stogContract.balanceOf(walletAddress);
+                    const saldoSTOG = parseFloat(ethers.formatUnits(balanceSTOG, 18)).toFixed(4);
+
+                    walletAddressSpan.textContent = walletAddress;
+                    saldoAOGISpan.textContent = saldoAOGI;
+                    saldoETHSpan.textContent = saldoETH;
+                    saldoUSDTSpan.textContent = saldoUSDT;
+                    saldoBTCSpan.textContent = saldoBTC;
+                    saldoGIMOSpan.textContent = saldoGIMO;
+                    saldoSTOGSpan.textContent = saldoSTOG;
+
+                    log("Wallet balances updated successfully.", "success");
+                } catch (error) {
+                    log(`Failed to update wallet data: ${error.message}`, "error");
+                }
+            }
+
+            /**
+             * Handles token approval for a given amount.
+             * @param {string} tokenAddress - The address of the token to approve.
+             * @param {ethers.BigNumberish} amount - The amount to approve.
+             */
+            async function approveToken(tokenAddress, amount) {
+                try {
+                    log(`Checking approval for ${tokenAddress}...`, "system");
+                    const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, wallet);
+                    const currentAllowance = await tokenContract.allowance(wallet.address, ROUTER_ADDRESS);
+
+                    if (currentAllowance >= amount) {
+                        log("Approval already sufficient", "system");
+                        return;
+                    }
+
+                    log("Approval needed. Sending approval transaction...", "system");
+                    const feeData = await provider.getFeeData();
+                    const gasPriceToUse = selectedGasPrice || feeData.gasPrice;
+
+                    const tx = await tokenContract.approve(ROUTER_ADDRESS, amount, {
+                        gasLimit: APPROVAL_GAS_LIMIT,
+                        gasPrice: gasPriceToUse,
+                        nonce: nextNonce // Use managed nonce
+                    });
+                    log(`Approval transaction sent: ${EXPLORER_URL}${tx.hash}`, "system");
+                    await showMessageBox("Approval Pending", `Waiting for approval transaction to confirm: ${EXPLORER_URL}${tx.hash}`);
+                    await tx.wait();
+                    log("Approval successful", "success");
+                } catch (error) {
+                    log(`Approval failed: ${error.message}`, "error");
+                    throw error;
+                }
+            }
+
+            /**
+             * Executes an automated token swap.
+             * @param {string} direction - The swap direction (e.g., 'usdtToEth').
+             * @param {ethers.BigNumberish} amountIn - The amount of token to swap.
+             */
+            async function swapAuto(direction, amountIn) {
+                try {
+                    const swapContract = new ethers.Contract(ROUTER_ADDRESS, CONTRACT_ABI, wallet);
+                    let params;
+                    const deadline = Math.floor(Date.now() / 1000) + 120; // 2 minutes from now
+
+                    let logMessage = `Starting swap ${direction}: ${ethers.formatUnits(amountIn, 18)}`;
+
+                    // Determine token addresses based on direction
+                    let tokenInAddress, tokenOutAddress;
+                    switch (direction) {
+                        case "usdtToEth": tokenInAddress = USDT_ADDRESS; tokenOutAddress = ETH_ADDRESS; logMessage += " USDT"; break;
+                        case "ethToUsdt": tokenInAddress = ETH_ADDRESS; tokenOutAddress = USDT_ADDRESS; logMessage += " ETH"; break;
+                        case "usdtToBtc": tokenInAddress = USDT_ADDRESS; tokenOutAddress = BTC_ADDRESS; logMessage += " USDT"; break;
+                        case "btcToUsdt": tokenInAddress = BTC_ADDRESS; tokenOutAddress = USDT_ADDRESS; logMessage += " BTC"; break;
+                        case "btcToEth": tokenInAddress = BTC_ADDRESS; tokenOutAddress = ETH_ADDRESS; logMessage += " BTC"; break;
+                        case "ethToBtc": tokenInAddress = ETH_ADDRESS; tokenOutAddress = BTC_ADDRESS; logMessage += " ETH"; break;
+                        case "usdtToGimo": tokenInAddress = USDT_ADDRESS; tokenOutAddress = GIMO_ADDRESS; logMessage += " USDT"; break;
+                        case "gimoToUsdt": tokenInAddress = GIMO_ADDRESS; tokenOutAddress = USDT_ADDRESS; logMessage += " GIMO"; break;
+                        case "usdtToStog": tokenInAddress = USDT_ADDRESS; tokenOutAddress = STOG_ADDRESS; logMessage += " USDT"; break;
+                        case "stogToUsdt": tokenInAddress = STOG_ADDRESS; tokenOutAddress = USDT_ADDRESS; logMessage += " STOG"; break;
+                        case "ethToGimo": tokenInAddress = ETH_ADDRESS; tokenOutAddress = GIMO_ADDRESS; logMessage += " ETH"; break;
+                        case "gimoToEth": tokenInAddress = GIMO_ADDRESS; tokenOutAddress = ETH_ADDRESS; logMessage += " GIMO"; break;
+                        case "btcToGimo": tokenInAddress = BTC_ADDRESS; tokenOutAddress = GIMO_ADDRESS; logMessage += " BTC"; break;
+                        case "gimoToBtc": tokenInAddress = GIMO_ADDRESS; tokenOutAddress = BTC_ADDRESS; logMessage += " GIMO"; break;
+                        case "ethToStog": tokenInAddress = ETH_ADDRESS; tokenOutAddress = STOG_ADDRESS; logMessage += " ETH"; break;
+                        case "stogToEth": tokenInAddress = STOG_ADDRESS; tokenOutAddress = ETH_ADDRESS; logMessage += " STOG"; break;
+                        case "btcToStog": tokenInAddress = BTC_ADDRESS; tokenOutAddress = STOG_ADDRESS; logMessage += " BTC"; break;
+                        case "stogToBtc": tokenInAddress = STOG_ADDRESS; tokenOutAddress = BTC_ADDRESS; logMessage += " STOG"; break;
+                        default: throw new Error("Unknown swap direction");
+                    }
+
+                    log(logMessage, "system");
+
+                    params = {
+                        tokenIn: tokenInAddress,
+                        tokenOut: tokenOutAddress,
+                        fee: 3000, // Assuming a common fee tier
+                        recipient: wallet.address,
+                        deadline,
+                        amountIn,
+                        amountOutMinimum: 0, // No minimum amount out specified
+                        sqrtPriceLimitX96: 0n, // No price limit specified
+                    };
+
+                    const gasPriceToUse = selectedGasPrice || (await provider.getFeeData()).gasPrice;
+
+                    const tx = await swapContract.exactInputSingle(params, {
+                        gasLimit: SWAP_GAS_LIMIT,
+                        gasPrice: gasPriceToUse,
+                        nonce: nextNonce // Use managed nonce
+                    });
+
+                    log(`Swap transaction sent: ${EXPLORER_URL}${tx.hash}`, "warning");
+                    await showMessageBox("Swap Pending", `Waiting for swap transaction to confirm: ${EXPLORER_URL}${tx.hash}`);
+                    const receipt = await tx.wait();
+                    log(`Swap transaction successful: ${EXPLORER_URL}${tx.hash}`, "success");
+                    const feeAOGI = ethers.formatEther(receipt.gasUsed * gasPriceToUse);
+                    log(`Transaction fee: ${feeAOGI} OG`, "success");
+                } catch (error) {
+                    if (error.message && error.message.toLowerCase().includes("nonce")) {
+                        nextNonce = await provider.getTransactionCount(wallet.address, "pending");
+                        log(`Nonce refreshed: ${nextNonce}`, "system");
+                    }
+                    log(`Swap ${direction} failed: ${error.message}`, "error");
+                    throw error;
+                }
+            }
+
+            /**
+             * Adds a transaction function to the queue and processes it.
+             * @param {Function} transactionFunction - The async function to execute.
+             * @param {string} description - A description of the transaction.
+             */
+            async function addTransactionToQueue(transactionFunction, description) {
+                const transactionId = ++transactionIdCounter;
+                transactionQueue.push({ id: transactionId, description, status: "queued", transactionFunction }); // Store the function
+                log(`Transaction [${transactionId}] added to queue: ${description}`, "system");
+
+                // If not already processing, start the queue processor
+                if (!isProcessingQueue) {
+                    processTransactionQueue();
+                }
+            }
+
+            /**
+             * Processes transactions in the queue one by one.
+             */
+            async function processTransactionQueue() {
+                if (isProcessingQueue) return; // Already processing
+
+                isProcessingQueue = true;
+                while (transactionQueue.length > 0) {
+                    const currentTx = transactionQueue[0]; // Get the first transaction
+                    currentTx.status = "processing";
+                    log(`Transaction [${currentTx.id}] processing: ${currentTx.description}`, "system");
+
+                    try {
+                        if (nextNonce === null) {
+                            nextNonce = await provider.getTransactionCount(wallet.address, "pending");
+                        }
+                        await currentTx.transactionFunction(); // Execute the transaction
+                        nextNonce++; // Increment nonce for next transaction
+                        currentTx.status = "completed";
+                        log(`Transaction [${currentTx.id}] completed`, "success");
+                    } catch (error) {
+                        if (error.message && error.message.toLowerCase().includes("nonce")) {
+                            nextNonce = await provider.getTransactionCount(wallet.address, "pending");
+                            log(`Nonce refreshed: ${nextNonce}`, "system");
+                        }
+                        currentTx.status = "error";
+                        log(`Transaction [${currentTx.id}] failed: ${error.message}`, "error");
+                        // Optionally, remove transaction from queue on error or retry
+                    } finally {
+                        transactionQueue.shift(); // Remove the processed transaction
+                    }
+                }
+                isProcessingQueue = false;
+                log("Transaction queue empty.", "system");
+            }
+
+
+            /**
+             * Presents gas fee options to the user via a modal.
+             * @returns {Promise<ethers.BigNumber>} The selected gas price.
+             */
+            async function chooseGasFee() {
+                return new Promise(async (resolve, reject) => {
+                    try {
+                        const feeData = await provider.getFeeData();
+                        const gasPriceBN = feeData.gasPrice;
+
+                        // Clear previous options
+                        gasFeeOptionsDiv.innerHTML = '';
+
+                        const options = [
+                            { value: gasPriceBN, label: `Normal: ${ethers.formatUnits(gasPriceBN, "gwei")} Gneuron` },
+                            { value: gasPriceBN / 100n * 80n, label: `Low: ${ethers.formatUnits(gasPriceBN / 100n * 80n, "gwei")} Gneuron` },
+                            { value: gasPriceBN * 2n, label: `High: ${ethers.formatUnits(gasPriceBN * 2n, "gwei")} Gneuron` },
+                        ];
+
+                        options.forEach((opt, index) => {
+                            const label = document.createElement('label');
+                            label.innerHTML = `
+                                <input type="radio" name="gasOption" value="${index}" ${index === 0 ? 'checked' : ''}>
+                                ${opt.label}
+                            `;
+                            gasFeeOptionsDiv.appendChild(label);
+                        });
+
+                        gasFeeModal.style.display = 'flex'; // Show modal
+
+                        const confirmHandler = () => {
+                            const selectedOptionIndex = parseInt(document.querySelector('input[name="gasOption"]:checked').value);
+                            selectedGasPrice = options[selectedOptionIndex].value;
+                            gasFeeModal.style.display = 'none';
+                            confirmGasBtn.removeEventListener('click', confirmHandler);
+                            closeGasModalBtn.removeEventListener('click', closeHandler);
+                            resolve(selectedGasPrice);
+                        };
+
+                        const closeHandler = () => {
+                            gasFeeModal.style.display = 'none';
+                            confirmGasBtn.removeEventListener('click', confirmHandler);
+                            closeGasModalBtn.removeEventListener('click', closeHandler);
+                            reject(new Error("Gas fee selection cancelled."));
+                        };
+
+                        confirmGasBtn.addEventListener('click', confirmHandler);
+                        closeGasModalBtn.addEventListener('click', closeHandler);
+
+                    } catch (error) {
+                        log(`Failed to fetch gas prices: ${error.message}`, "error");
+                        reject(error);
+                    }
+                });
+            }
+
+            /**
+             * Initiates the transaction process for a selected pair.
+             * @param {string} pair - The selected token pair.
+             * @param {number} totalSwaps - The number of swaps to perform.
+             */
+            async function startTransactionProcess(pair, totalSwaps) {
+                if (!wallet) {
+                    await showMessageBox("Wallet Not Loaded", "Please load your wallet first by entering the private key.");
+                    return;
+                }
+
+                try {
+                    selectedGasPrice = await chooseGasFee();
+                    log(`Selected gas fee: ${ethers.formatUnits(selectedGasPrice, "gwei")} Gneuron`, "system");
+                    log(`Starting ${pair} for ${totalSwaps} swaps...`, "system");
+
+                    // Clear previous queue and reset counter for new process
+                    transactionQueue = [];
+                    transactionIdCounter = 0;
+                    nextNonce = await provider.getTransactionCount(wallet.address, "pending"); // Get fresh nonce
+
+                    switch (pair) {
+                        case "USDT & ETH": await autoSwapUsdtEth(totalSwaps); break;
+                        case "USDT & BTC": await autoSwapUsdtBtc(totalSwaps); break;
+                        case "BTC & ETH": await autoSwapBtcEth(totalSwaps); break;
+                        case "USDT & GIMO": await autoSwapUsdtGimo(totalSwaps); break;
+                        case "USDT & STOG": await autoSwapUsdtStog(totalSwaps); break;
+                        case "BTC & USDT": await autoSwapBtcUsdt(totalSwaps); break;
+                        case "ETH & USDT": await autoSwapEthUsdt(totalSwaps); break;
+                        case "ETH & BTC": await autoSwapEthBtc(totalSwaps); break;
+                        case "ETH & GIMO": await autoSwapEthGimo(totalSwaps); break;
+                        case "BTC & GIMO": await autoSwapBtcGimo(totalSwaps); break;
+                        case "ETH & STOG": await autoSwapEthStog(totalSwaps); break;
+                        case "BTC & STOG": await autoSwapBtcStog(totalSwaps); break;
+                        case "Auto All": await autoSwapAll(totalSwaps); break;
+                        default: log(`Swap logic for pair ${pair} not implemented`, "error");
+                    }
+                    log(`All ${pair} swaps process initiated. Check logs for status.`, "success");
+                } catch (error) {
+                    log(`Error during transaction process setup: ${error.message}`, "error");
+                }
+            }
+
+            // Auto Swap Functions (Adapted for browser, using addTransactionToQueue)
+            async function autoSwapUsdtEth(totalSwaps) {
+                for (let i = 1; i <= totalSwaps; i++) {
+                    const isForward = i % 2 === 1;
+                    if (isForward) {
+                        // Small amount tuning: 5 to 30 USDT
+                        const randomUsdt = (Math.random() * (30 - 5) + 5).toFixed(2);
+                        const usdtAmount = ethers.parseUnits(randomUsdt, 18);
+                        const usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, provider);
+                        const currentUsdtBalance = await usdtContract.balanceOf(wallet.address);
+                        if (currentUsdtBalance < usdtAmount) {
+                            log(`Insufficient USDT balance: ${ethers.formatUnits(currentUsdtBalance, 18)} USDT`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(USDT_ADDRESS, usdtAmount);
+                            await swapAuto("usdtToEth", usdtAmount);
+                        }, `USDT to ETH, ${randomUsdt} USDT (Swap ${i}/${totalSwaps})`);
+                    } else {
+                        // Small amount tuning: 0.005 to 0.03 ETH
+                        const randomEth = (Math.random() * (0.03 - 0.005) + 0.005).toFixed(6);
+                        const ethAmount = ethers.parseUnits(randomEth, 18);
+                        const ethContract = new ethers.Contract(ETH_ADDRESS, ERC20_ABI, provider);
+                        const currentEthBalance = await ethContract.balanceOf(wallet.address);
+                        if (currentEthBalance < ethAmount) {
+                            log(`Insufficient ETH balance: ${ethers.formatUnits(currentEthBalance, 18)} ETH`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(ETH_ADDRESS, ethAmount);
+                            await swapAuto("ethToUsdt", ethAmount);
+                        }, `ETH to USDT, ${randomEth} ETH (Swap ${i}/${totalSwaps})`);
+                    }
+                    if (i < totalSwaps) {
+                        await interruptibleDelay(5000, `Waiting 5 seconds before next USDT & ETH swap...`);
+                    }
+                }
+                log("All USDT & ETH swaps queued.", "success");
+            }
+
+            async function autoSwapUsdtBtc(totalSwaps) {
+                for (let i = 1; i <= totalSwaps; i++) {
+                    const isForward = i % 2 === 1;
+                    if (isForward) {
+                        // Small amount tuning: 5 to 30 USDT
+                        const randomUsdt = (Math.random() * (30 - 5) + 5).toFixed(2);
+                        const usdtAmount = ethers.parseUnits(randomUsdt, 18);
+                        const usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, provider);
+                        const currentUsdtBalance = await usdtContract.balanceOf(wallet.address);
+                        if (currentUsdtBalance < usdtAmount) {
+                            log(`Insufficient USDT balance: ${ethers.formatUnits(currentUsdtBalance, 18)} USDT`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(USDT_ADDRESS, usdtAmount);
+                            await swapAuto("usdtToBtc", usdtAmount);
+                        }, `USDT to BTC, ${randomUsdt} USDT (Swap ${i}/${totalSwaps})`);
+                    } else {
+                        // Small amount tuning: 0.0001 to 0.001 BTC
+                        const randomBtc = (Math.random() * (0.001 - 0.0001) + 0.0001).toFixed(6);
+                        const btcAmount = ethers.parseUnits(randomBtc, 18);
+                        const btcContract = new ethers.Contract(BTC_ADDRESS, ERC20_ABI, provider);
+                        const currentBtcBalance = await btcContract.balanceOf(wallet.address);
+                        if (currentBtcBalance < btcAmount) {
+                            log(`Insufficient BTC balance: ${ethers.formatUnits(currentBtcBalance, 18)} BTC`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(BTC_ADDRESS, btcAmount);
+                            await swapAuto("btcToUsdt", btcAmount);
+                        }, `BTC to USDT, ${randomBtc} BTC (Swap ${i}/${totalSwaps})`);
+                    }
+                    if (i < totalSwaps) {
+                        await interruptibleDelay(5000, `Waiting 5 seconds before next USDT & BTC swap...`);
+                    }
+                }
+                log("All USDT & BTC swaps queued.", "success");
+            }
+
+            async function autoSwapBtcEth(totalSwaps) {
+                for (let i = 1; i <= totalSwaps; i++) {
+                    const isForward = i % 2 === 1;
+                    if (isForward) {
+                        // Small amount tuning: 0.0005 to 0.005 BTC
+                        const randomBtc = (Math.random() * (0.005 - 0.0005) + 0.0005).toFixed(6);
+                        const btcAmount = ethers.parseUnits(randomBtc, 18);
+                        const btcContract = new ethers.Contract(BTC_ADDRESS, ERC20_ABI, provider);
+                        const currentBtcBalance = await btcContract.balanceOf(wallet.address);
+                        if (currentBtcBalance < btcAmount) {
+                            log(`Insufficient BTC balance: ${ethers.formatUnits(currentBtcBalance, 18)} BTC`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(BTC_ADDRESS, btcAmount);
+                            await swapAuto("btcToEth", btcAmount);
+                        }, `BTC to ETH, ${randomBtc} BTC (Swap ${i}/${totalSwaps})`);
+                    } else {
+                        // Small amount tuning: 0.005 to 0.03 ETH
+                        const randomEth = (Math.random() * (0.03 - 0.005) + 0.005).toFixed(6);
+                        const ethAmount = ethers.parseUnits(randomEth, 18);
+                        const ethContract = new ethers.Contract(ETH_ADDRESS, ERC20_ABI, provider);
+                        const currentEthBalance = await ethContract.balanceOf(wallet.address);
+                        if (currentEthBalance < ethAmount) {
+                            log(`Insufficient ETH balance: ${ethers.formatUnits(currentEthBalance, 18)} ETH`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(ETH_ADDRESS, ethAmount);
+                            await swapAuto("ethToBtc", ethAmount);
+                        }, `ETH to BTC, ${randomEth} ETH (Swap ${i}/${totalSwaps})`);
+                    }
+                    if (i < totalSwaps) {
+                        await interruptibleDelay(5000, `Waiting 5 seconds before next BTC & ETH swap...`);
+                    }
+                }
+                log("All BTC & ETH swaps queued.", "success");
+            }
+
+            async function autoSwapUsdtGimo(totalSwaps) {
+                for (let i = 1; i <= totalSwaps; i++) {
+                    const isForward = i % 2 === 1;
+                    if (isForward) {
+                        // Small amount tuning: 5 to 30 USDT
+                        const randomUsdt = (Math.random() * (30 - 5) + 5).toFixed(2);
+                        const usdtAmount = ethers.parseUnits(randomUsdt, 18);
+                        const usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, provider);
+                        const currentUsdtBalance = await usdtContract.balanceOf(wallet.address);
+                        if (currentUsdtBalance < usdtAmount) {
+                            log(`Insufficient USDT balance: ${ethers.formatUnits(currentUsdtBalance, 18)} USDT`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(USDT_ADDRESS, usdtAmount);
+                            await swapAuto("usdtToGimo", usdtAmount);
+                        }, `USDT to GIMO, ${randomUsdt} USDT (Swap ${i}/${totalSwaps})`);
+                    } else {
+                        // Small amount tuning: 10 to 100 GIMO
+                        const randomGimo = (Math.random() * (100 - 10) + 10).toFixed(2);
+                        const gimoAmount = ethers.parseUnits(randomGimo, 18);
+                        const gimoContract = new ethers.Contract(GIMO_ADDRESS, ERC20_ABI, provider);
+                        const currentGimoBalance = await gimoContract.balanceOf(wallet.address);
+                        if (currentGimoBalance < gimoAmount) {
+                            log(`Insufficient GIMO balance: ${ethers.formatUnits(currentGimoBalance, 18)} GIMO`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(GIMO_ADDRESS, gimoAmount);
+                            await swapAuto("gimoToUsdt", gimoAmount);
+                        }, `GIMO to USDT, ${randomGimo} GIMO (Swap ${i}/${totalSwaps})`);
+                    }
+                    if (i < totalSwaps) {
+                        await interruptibleDelay(5000, `Waiting 5 seconds before next USDT & GIMO swap...`);
+                    }
+                }
+                log("All USDT & GIMO swaps queued.", "success");
+            }
+
+            async function autoSwapUsdtStog(totalSwaps) {
+                for (let i = 1; i <= totalSwaps; i++) {
+                    const isForward = i % 2 === 1;
+                    if (isForward) {
+                        // Small amount tuning: 5 to 30 USDT
+                        const randomUsdt = (Math.random() * (30 - 5) + 5).toFixed(2);
+                        const usdtAmount = ethers.parseUnits(randomUsdt, 18);
+                        const usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, provider);
+                        const currentUsdtBalance = await usdtContract.balanceOf(wallet.address);
+                        if (currentUsdtBalance < usdtAmount) {
+                            log(`Insufficient USDT balance: ${ethers.formatUnits(currentUsdtBalance, 18)} USDT`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(USDT_ADDRESS, usdtAmount);
+                            await swapAuto("usdtToStog", usdtAmount);
+                        }, `USDT to STOG, ${randomUsdt} USDT (Swap ${i}/${totalSwaps})`);
+                    } else {
+                        // Small amount tuning: 100 to 1000 STOG
+                        const randomStog = (Math.random() * (1000 - 100) + 100).toFixed(2);
+                        const stogAmount = ethers.parseUnits(randomStog, 18);
+                        const stogContract = new ethers.Contract(STOG_ADDRESS, ERC20_ABI, provider);
+                        const currentStogBalance = await stogContract.balanceOf(wallet.address);
+                        if (currentStogBalance < stogAmount) {
+                            log(`Insufficient STOG balance: ${ethers.formatUnits(currentStogBalance, 18)} STOG`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(STOG_ADDRESS, stogAmount);
+                            await swapAuto("stogToUsdt", stogAmount);
+                        }, `STOG to USDT, ${randomStog} STOG (Swap ${i}/${totalSwaps})`);
+                    }
+                    if (i < totalSwaps) {
+                        await interruptibleDelay(5000, `Waiting 5 seconds before next USDT & STOG swap...`);
+                    }
+                }
+                log("All USDT & STOG swaps queued.", "success");
+            }
+
+            async function autoSwapBtcUsdt(totalSwaps) {
+                for (let i = 1; i <= totalSwaps; i++) {
+                    const isForward = i % 2 === 1;
+                    if (isForward) {
+                        // Small amount tuning: 0.0001 to 0.001 BTC
+                        const randomBtc = (Math.random() * (0.001 - 0.0001) + 0.0001).toFixed(6);
+                        const btcAmount = ethers.parseUnits(randomBtc, 18);
+                        const btcContract = new ethers.Contract(BTC_ADDRESS, ERC20_ABI, provider);
+                        const currentBtcBalance = await btcContract.balanceOf(wallet.address);
+                        if (currentBtcBalance < btcAmount) {
+                            log(`Insufficient BTC balance: ${ethers.formatUnits(currentBtcBalance, 18)} BTC`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(BTC_ADDRESS, btcAmount);
+                            await swapAuto("btcToUsdt", btcAmount);
+                        }, `BTC to USDT, ${randomBtc} BTC (Swap ${i}/${totalSwaps})`);
+                    } else {
+                        // Small amount tuning: 5 to 30 USDT
+                        const randomUsdt = (Math.random() * (30 - 5) + 5).toFixed(2);
+                        const usdtAmount = ethers.parseUnits(randomUsdt, 18);
+                        const usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, provider);
+                        const currentUsdtBalance = await usdtContract.balanceOf(wallet.address);
+                        if (currentUsdtBalance < usdtAmount) {
+                            log(`Insufficient USDT balance: ${ethers.formatUnits(currentUsdtBalance, 18)} USDT`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(USDT_ADDRESS, usdtAmount);
+                            await swapAuto("usdtToBtc", usdtAmount);
+                        }, `USDT to BTC, ${randomUsdt} USDT (Swap ${i}/${totalSwaps})`);
+                    }
+                    if (i < totalSwaps) {
+                        await interruptibleDelay(5000, `Waiting 5 seconds before next BTC & USDT swap...`);
+                    }
+                }
+                log("All BTC & USDT swaps queued.", "success");
+            }
+
+            async function autoSwapEthUsdt(totalSwaps) {
+                for (let i = 1; i <= totalSwaps; i++) {
+                    const isForward = i % 2 === 1;
+                    if (isForward) {
+                        // Small amount tuning: 0.005 to 0.03 ETH
+                        const randomEth = (Math.random() * (0.03 - 0.005) + 0.005).toFixed(6);
+                        const ethAmount = ethers.parseUnits(randomEth, 18);
+                        const ethContract = new ethers.Contract(ETH_ADDRESS, ERC20_ABI, provider);
+                        const currentEthBalance = await ethContract.balanceOf(wallet.address);
+                        if (currentEthBalance < ethAmount) {
+                            log(`Insufficient ETH balance: ${ethers.formatUnits(currentEthBalance, 18)} ETH`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(ETH_ADDRESS, ethAmount);
+                            await swapAuto("ethToUsdt", ethAmount);
+                        }, `ETH to USDT, ${randomEth} ETH (Swap ${i}/${totalSwaps})`);
+                    } else {
+                        // Small amount tuning: 5 to 30 USDT
+                        const randomUsdt = (Math.random() * (30 - 5) + 5).toFixed(2);
+                        const usdtAmount = ethers.parseUnits(randomUsdt, 18);
+                        const usdtContract = new ethers.Contract(USDT_ADDRESS, ERC20_ABI, provider);
+                        const currentUsdtBalance = await usdtContract.balanceOf(wallet.address);
+                        if (currentUsdtBalance < usdtAmount) {
+                            log(`Insufficient USDT balance: ${ethers.formatUnits(currentUsdtBalance, 18)} USDT`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(USDT_ADDRESS, usdtAmount);
+                            await swapAuto("usdtToEth", usdtAmount);
+                        }, `USDT to ETH, ${randomUsdt} USDT (Swap ${i}/${totalSwaps})`);
+                    }
+                    if (i < totalSwaps) {
+                        await interruptibleDelay(5000, `Waiting 5 seconds before next ETH & USDT swap...`);
+                    }
+                }
+                log("All ETH & USDT swaps queued.", "success");
+            }
+
+            async function autoSwapEthBtc(totalSwaps) {
+                for (let i = 1; i <= totalSwaps; i++) {
+                    const isForward = i % 2 === 1;
+                    if (isForward) {
+                        // Small amount tuning: 0.005 to 0.03 ETH
+                        const randomEth = (Math.random() * (0.03 - 0.005) + 0.005).toFixed(6);
+                        const ethAmount = ethers.parseUnits(randomEth, 18);
+                        const ethContract = new ethers.Contract(ETH_ADDRESS, ERC20_ABI, provider);
+                        const currentEthBalance = await ethContract.balanceOf(wallet.address);
+                        if (currentEthBalance < ethAmount) {
+                            log(`Insufficient ETH balance: ${ethers.formatUnits(currentEthBalance, 18)} ETH`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(ETH_ADDRESS, ethAmount);
+                            await swapAuto("ethToBtc", ethAmount);
+                        }, `ETH to BTC, ${randomEth} ETH (Swap ${i}/${totalSwaps})`);
+                    } else {
+                        // Small amount tuning: 0.0005 to 0.005 BTC
+                        const randomBtc = (Math.random() * (0.005 - 0.0005) + 0.0005).toFixed(6);
+                        const btcAmount = ethers.parseUnits(randomBtc, 18);
+                        const btcContract = new ethers.Contract(BTC_ADDRESS, ERC20_ABI, provider);
+                        const currentBtcBalance = await btcContract.balanceOf(wallet.address);
+                        if (currentBtcBalance < btcAmount) {
+                            log(`Insufficient BTC balance: ${ethers.formatUnits(currentBtcBalance, 18)} BTC`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(BTC_ADDRESS, btcAmount);
+                            await swapAuto("btcToEth", btcAmount);
+                        }, `BTC to ETH, ${randomBtc} BTC (Swap ${i}/${totalSwaps})`);
+                    }
+                    if (i < totalSwaps) {
+                        await interruptibleDelay(5000, `Waiting 5 seconds before next ETH & BTC swap...`);
+                    }
+                }
+                log("All ETH & BTC swaps queued.", "success");
+            }
+
+            async function autoSwapEthGimo(totalSwaps) {
+                for (let i = 1; i <= totalSwaps; i++) {
+                    const isForward = i % 2 === 1;
+                    if (isForward) {
+                        // Small amount tuning: 0.005 to 0.03 ETH
+                        const randomEth = (Math.random() * (0.03 - 0.005) + 0.005).toFixed(6);
+                        const ethAmount = ethers.parseUnits(randomEth, 18);
+                        const ethContract = new ethers.Contract(ETH_ADDRESS, ERC20_ABI, provider);
+                        const currentEthBalance = await ethContract.balanceOf(wallet.address);
+                        if (currentEthBalance < ethAmount) {
+                            log(`Insufficient ETH balance: ${ethers.formatUnits(currentEthBalance, 18)} ETH`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(ETH_ADDRESS, ethAmount);
+                            await swapAuto("ethToGimo", ethAmount);
+                        }, `ETH to GIMO, ${randomEth} ETH (Swap ${i}/${totalSwaps})`);
+                    } else {
+                        // Small amount tuning: 10 to 100 GIMO
+                        const randomGimo = (Math.random() * (100 - 10) + 10).toFixed(2);
+                        const gimoAmount = ethers.parseUnits(randomGimo, 18);
+                        const gimoContract = new ethers.Contract(GIMO_ADDRESS, ERC20_ABI, provider);
+                        const currentGimoBalance = await gimoContract.balanceOf(wallet.address);
+                        if (currentGimoBalance < gimoAmount) {
+                            log(`Insufficient GIMO balance: ${ethers.formatUnits(currentGimoBalance, 18)} GIMO`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(GIMO_ADDRESS, gimoAmount);
+                            await swapAuto("gimoToEth", gimoAmount);
+                        }, `GIMO to ETH, ${randomGimo} GIMO (Swap ${i}/${totalSwaps})`);
+                    }
+                    if (i < totalSwaps) {
+                        await interruptibleDelay(5000, `Waiting 5 seconds before next ETH & GIMO swap...`);
+                    }
+                }
+                log("All ETH & GIMO swaps queued.", "success");
+            }
+
+            async function autoSwapBtcGimo(totalSwaps) {
+                for (let i = 1; i <= totalSwaps; i++) {
+                    const isForward = i % 2 === 1;
+                    if (isForward) {
+                        // Small amount tuning: 0.0001 to 0.001 BTC
+                        const randomBtc = (Math.random() * (0.001 - 0.0001) + 0.0001).toFixed(6);
+                        const btcAmount = ethers.parseUnits(randomBtc, 18);
+                        const btcContract = new ethers.Contract(BTC_ADDRESS, ERC20_ABI, provider);
+                        const currentBtcBalance = await btcContract.balanceOf(wallet.address);
+                        if (currentBtcBalance < btcAmount) {
+                            log(`Insufficient BTC balance: ${ethers.formatUnits(currentBtcBalance, 18)} BTC`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(BTC_ADDRESS, btcAmount);
+                            await swapAuto("btcToGimo", btcAmount);
+                        }, `BTC to GIMO, ${randomBtc} BTC (Swap ${i}/${totalSwaps})`);
+                    } else {
+                        // Small amount tuning: 10 to 100 GIMO
+                        const randomGimo = (Math.random() * (100 - 10) + 10).toFixed(2);
+                        const gimoAmount = ethers.parseUnits(randomGimo, 18);
+                        const gimoContract = new ethers.Contract(GIMO_ADDRESS, ERC20_ABI, provider);
+                        const currentGimoBalance = await gimoContract.balanceOf(wallet.address);
+                        if (currentGimoBalance < gimoAmount) {
+                            log(`Insufficient GIMO balance: ${ethers.formatUnits(currentGimoBalance, 18)} GIMO`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(GIMO_ADDRESS, gimoAmount);
+                            await swapAuto("gimoToBtc", gimoAmount);
+                        }, `GIMO to BTC, ${randomGimo} GIMO (Swap ${i}/${totalSwaps})`);
+                    }
+                    if (i < totalSwaps) {
+                        await interruptibleDelay(5000, `Waiting 5 seconds before next BTC & GIMO swap...`);
+                    }
+                }
+                log("All BTC & GIMO swaps queued.", "success");
+            }
+
+            async function autoSwapEthStog(totalSwaps) {
+                for (let i = 1; i <= totalSwaps; i++) {
+                    const isForward = i % 2 === 1;
+                    if (isForward) {
+                        // Small amount tuning: 0.005 to 0.03 ETH
+                        const randomEth = (Math.random() * (0.03 - 0.005) + 0.005).toFixed(6);
+                        const ethAmount = ethers.parseUnits(randomEth, 18);
+                        const ethContract = new ethers.Contract(ETH_ADDRESS, ERC20_ABI, provider);
+                        const currentEthBalance = await ethContract.balanceOf(wallet.address);
+                        if (currentEthBalance < ethAmount) {
+                            log(`Insufficient ETH balance: ${ethers.formatUnits(currentEthBalance, 18)} ETH`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(ETH_ADDRESS, ethAmount);
+                            await swapAuto("ethToStog", ethAmount);
+                        }, `ETH to STOG, ${randomEth} ETH (Swap ${i}/${totalSwaps})`);
+                    } else {
+                        // Small amount tuning: 100 to 1000 STOG
+                        const randomStog = (Math.random() * (1000 - 100) + 100).toFixed(2);
+                        const stogAmount = ethers.parseUnits(randomStog, 18);
+                        const stogContract = new ethers.Contract(STOG_ADDRESS, ERC20_ABI, provider);
+                        const currentStogBalance = await stogContract.balanceOf(wallet.address);
+                        if (currentStogBalance < stogAmount) {
+                            log(`Insufficient STOG balance: ${ethers.formatUnits(currentStogBalance, 18)} STOG`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(STOG_ADDRESS, stogAmount);
+                            await swapAuto("stogToEth", stogAmount);
+                        }, `STOG to ETH, ${randomStog} STOG (Swap ${i}/${totalSwaps})`);
+                    }
+                    if (i < totalSwaps) {
+                        await interruptibleDelay(5000, `Waiting 5 seconds before next ETH & STOG swap...`);
+                    }
+                }
+                log("All ETH & STOG swaps queued.", "success");
+            }
+
+            async function autoSwapBtcStog(totalSwaps) {
+                for (let i = 1; i <= totalSwaps; i++) {
+                    const isForward = i % 2 === 1;
+                    if (isForward) {
+                        // Small amount tuning: 0.0001 to 0.001 BTC
+                        const randomBtc = (Math.random() * (0.001 - 0.0001) + 0.0001).toFixed(6);
+                        const btcAmount = ethers.parseUnits(randomBtc, 18);
+                        const btcContract = new ethers.Contract(BTC_ADDRESS, ERC20_ABI, provider);
+                        const currentBtcBalance = await btcContract.balanceOf(wallet.address);
+                        if (currentBtcBalance < btcAmount) {
+                            log(`Insufficient BTC balance: ${ethers.formatUnits(currentBtcBalance, 18)} BTC`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(BTC_ADDRESS, btcAmount);
+                            await swapAuto("btcToStog", btcAmount);
+                        }, `BTC to STOG, ${randomBtc} BTC (Swap ${i}/${totalSwaps})`);
+                    } else {
+                        // Small amount tuning: 100 to 1000 STOG
+                        const randomStog = (Math.random() * (1000 - 100) + 100).toFixed(2);
+                        const stogAmount = ethers.parseUnits(randomStog, 18);
+                        const stogContract = new ethers.Contract(STOG_ADDRESS, ERC20_ABI, provider);
+                        const currentStogBalance = await stogContract.balanceOf(wallet.address);
+                        if (currentStogBalance < stogAmount) {
+                            log(`Insufficient STOG balance: ${ethers.formatUnits(currentStogBalance, 18)} STOG`, "error");
+                            continue;
+                        }
+                        await addTransactionToQueue(async () => {
+                            await approveToken(STOG_ADDRESS, stogAmount);
+                            await swapAuto("stogToBtc", stogAmount);
+                        }, `STOG to BTC, ${randomStog} STOG (Swap ${i}/${totalSwaps})`);
+                    }
+                    if (i < totalSwaps) {
+                        await interruptibleDelay(5000, `Waiting 5 seconds before next BTC & STOG swap...`);
+                    }
+                }
+                log("All BTC & STOG swaps queued.", "success");
+            }
+
+
+            async function autoSwapAll(totalSwaps) {
+                log("Starting Auto All Swaps...", "system");
+
+                await autoSwapUsdtEth(totalSwaps);
+                await interruptibleDelay(5000, "Waiting 5 seconds before next pair (USDT & BTC)...");
+                await autoSwapUsdtBtc(totalSwaps);
+                await interruptibleDelay(5000, "Waiting 5 seconds before next pair (BTC & ETH)...");
+                await autoSwapBtcEth(totalSwaps);
+                await interruptibleDelay(5000, "Waiting 5 seconds before next pair (USDT & GIMO)...");
+                await autoSwapUsdtGimo(totalSwaps);
+                await interruptibleDelay(5000, "Waiting 5 seconds before next pair (USDT & STOG)...");
+                await autoSwapUsdtStog(totalSwaps);
+                await interruptibleDelay(5000, "Waiting 5 seconds before next pair (BTC & USDT)...");
+                await autoSwapBtcUsdt(totalSwaps);
+                await interruptibleDelay(5000, "Waiting 5 seconds before next pair (ETH & USDT)...");
+                await autoSwapEthUsdt(totalSwaps);
+                await interruptibleDelay(5000, "Waiting 5 seconds before next pair (ETH & BTC)...");
+                await autoSwapEthBtc(totalSwaps);
+                await interruptibleDelay(5000, "Waiting 5 seconds before next pair (ETH & GIMO)...");
+                await autoSwapEthGimo(totalSwaps);
+                await interruptibleDelay(5000, "Waiting 5 seconds before next pair (BTC & GIMO)...");
+                await autoSwapBtcGimo(totalSwaps);
+                await interruptibleDelay(5000, "Waiting 5 seconds before next pair (ETH & STOG)...");
+                await autoSwapEthStog(totalSwaps);
+                await interruptibleDelay(5000, "Waiting 5 seconds before next pair (BTC & STOG)...");
+                await autoSwapBtcStog(totalSwaps);
+
+                log("All Auto All swaps queued.", "success");
+            }
+
+
+            // Event Listeners
+            loadWalletBtn.addEventListener('click', async () => {
+                const privateKey = privateKeyInput.value.trim();
+                if (!privateKey || !privateKey.match(/^0x[0-9a-fA-F]{64}$/)) {
+                    await showMessageBox("Invalid Private Key", "Please enter a valid 64-character hexadecimal private key starting with '0x'.");
+                    return;
+                }
+
+                try {
+                    provider = new ethers.JsonRpcProvider(RPC_URL);
+                    wallet = new ethers.Wallet(privateKey, provider);
+                    walletInfoDiv.classList.remove('hidden');
+                    log("Wallet loaded successfully!", "success");
+                    await updateWalletData();
+                } catch (error) {
+                    log(`Error loading wallet: ${error.message}`, "error");
+                    await showMessageBox("Wallet Load Error", `Failed to load wallet: ${error.message}`);
+                }
+            });
+
+            updateBalanceBtn.addEventListener('click', updateWalletData);
+
+            // New Faucet button event listener
+            openFaucetBtn.addEventListener('click', () => {
+                window.open(FAUCET_URL, '_blank');
+                log(`Opened 0G Faucet: ${FAUCET_URL}`, "system");
+            });
+
+            // Multi-Wallet Swaps Event Listener
+            startMultiWalletBtn.addEventListener("click", async () => {
+                const keys = multiWalletInput.value
+                    .split('\n')
+                    .map(k => k.trim())
+                    .filter(k => k && k.startsWith("0x") && k.length === 66);
+
+                if (keys.length === 0) {
+                    await showMessageBox("No Keys", "Please paste at least one valid private key for multi-wallet swaps.");
+                    return;
+                }
+
+                log(`Initiating multi-wallet swap session for ${keys.length} wallets.`, "system");
+
+                for (let i = 0; i < keys.length; i++) {
+                    const key = keys[i];
+                    log(`\n🔁 Starting process for wallet ${i + 1}/${keys.length} (${key.substring(0, 8)}...)`, "system");
+
+                    try {
+                        provider = new ethers.JsonRpcProvider(RPC_URL);
+                        wallet = new ethers.Wallet(key, provider);
+                        await updateWalletData(); // Update UI for current wallet
+                        selectedGasPrice = await chooseGasFee(); // Choose gas for each wallet
+
+                        // Faucet Claim Logic
+                        if (canClaimFaucet(wallet.address)) {
+                            log(`🕓 Claiming faucet for ${wallet.address}...`, "system");
+                            // Add faucet claims to the queue
+                            await addTransactionToQueue(async () => { await claimFaucet(USDT_ADDRESS); }, `Claim USDT for ${wallet.address.substring(0, 8)}...`);
+                            await addTransactionToQueue(async () => { await claimFaucet(ETH_ADDRESS); }, `Claim ETH for ${wallet.address.substring(0, 8)}...`);
+                            await addTransactionToQueue(async () => { await claimFaucet(BTC_ADDRESS); }, `Claim BTC for ${wallet.address.substring(0, 8)}...`);
+                            markFaucetClaimed(wallet.address);
+                            log(`✅ Faucet claim requests queued for ${wallet.address}.`, "success");
+                        } else {
+                            log(`⏳ Faucet already claimed in last 24h for ${wallet.address}.`, "warning");
+                        }
+
+                        // Optional: Auto-run a random pair
+                        const pairs = [
+                            "USDT & ETH", "USDT & BTC", "BTC & ETH", "USDT & GIMO", "USDT & STOG",
+                            "BTC & USDT", "ETH & USDT", "ETH & BTC", "ETH & GIMO", "BTC & GIMO",
+                            "ETH & STOG", "BTC & STOG"
+                        ];
+                        const randomPair = pairs[Math.floor(Math.random() * pairs.length)];
+                        const swapCount = Math.floor(Math.random() * 3) + 1; // 1 to 3 swaps per wallet
+
+                        log(`Wallet ${i + 1}: Auto-running ${randomPair} for ${swapCount} swaps.`, "info");
+                        // Queue the swaps as well
+                        await addTransactionToQueue(async () => { await startTransactionProcess(randomPair, swapCount); }, `Auto-swap ${randomPair} for ${wallet.address.substring(0, 8)}...`);
+
+                    } catch (err) {
+                        log(`❌ Wallet ${i + 1} (${key.substring(0, 8)}...) failed: ${err.message}`, "error");
+                    }
+
+                    if (i < keys.length - 1) {
+                        await interruptibleDelay(10000 + Math.random() * 5000, `Waiting before next wallet (${i + 2}/${keys.length})...`); // Cooldown between wallets
+                    }
+                }
+
+                log("✅ Multi-wallet swap session completed.", "success");
+                await showMessageBox("Multi-Wallet Swaps Complete", "The multi-wallet swap session has finished. Check the log for details.");
+            });
+
+
+            swapButtons.forEach(button => {
+                button.addEventListener('click', async () => {
+                    const pair = button.dataset.pair;
+                    const totalSwaps = parseInt(numSwapsInput.value);
+
+                    if (isNaN(totalSwaps) || totalSwaps <= 0) {
+                        await showMessageBox("Invalid Input", "Please enter a valid number of swaps (greater than 0).");
+                        return;
+                    }
+
+                    await startTransactionProcess(pair, totalSwaps);
+                });
+            });
+
+            exitBtn.addEventListener('click', async () => {
+                await showMessageBox("Exiting", "Jaine Auto Bot is exiting. Thank you!");
+                log("Exiting Jaine Auto Bot...", "system");
+                // In a browser environment, "exit" just means stopping further operations.
+                // You might want to clear sensitive data or disable buttons here.
+                privateKeyInput.value = '';
+                multiWalletInput.value = ''; // Clear multi-wallet input
+                walletInfoDiv.classList.add('hidden');
+                logOutputDiv.innerHTML = ''; // Clear logs
+                wallet = null;
+                provider = null;
+                transactionQueue = [];
+                transactionIdCounter = 0;
+                isProcessingQueue = false;
+                selectedGasPrice = null;
+                nextNonce = null;
+                lastFaucetClaims = {}; // Clear faucet claims on exit
+            });
+
+            log("Welcome to Jaine Auto Bot! Please load your wallet to begin.", "system");
+        };
+    </script>
+</body>
+</html>
